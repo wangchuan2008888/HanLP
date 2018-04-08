@@ -142,6 +142,7 @@ public class DijkstraSegment extends WordBasedGenerativeModelSegment
         {
             State p = que.poll();
             if (d[p.vertex] < p.cost) continue;
+            //感觉这样实现是有问题的，不是真正的DijkStra算法
             for (EdgeFrom edgeFrom : edgesTo[p.vertex])
             {
                 if (d[edgeFrom.from] > d[p.vertex] + edgeFrom.weight)

@@ -77,6 +77,7 @@ public class CharType
         type = new byte[65536];
         logger.info("字符类型对应表开始加载 " + HanLP.Config.CharTypePath);
         long start = System.currentTimeMillis();
+        //加载字符类型表如果没有的话就生成字符表
         ByteArray byteArray = ByteArray.createByteArray(HanLP.Config.CharTypePath);
         if (byteArray == null)
         {
