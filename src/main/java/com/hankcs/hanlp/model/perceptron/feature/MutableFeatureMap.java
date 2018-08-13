@@ -30,13 +30,25 @@ public class MutableFeatureMap extends FeatureMap
 
     public MutableFeatureMap(TagSet tagSet)
     {
-        super(tagSet);
+        super(tagSet, true);
         featureIdMap = new TreeMap<String, Integer>();
+        addTransitionFeatures(tagSet);
+    }
+
+    private void addTransitionFeatures(TagSet tagSet)
+    {
         for (int i = 0; i < tagSet.size(); i++)
         {
             idOf("BL=" + tagSet.stringOf(i));
         }
         idOf("BL=_BL_");
+    }
+
+    public MutableFeatureMap(TagSet tagSet, Map<String, Integer> featureIdMap)
+    {
+        super(tagSet);
+        this.featureIdMap = featureIdMap;
+        addTransitionFeatures(tagSet);
     }
 
     @Override

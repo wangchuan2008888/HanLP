@@ -12,7 +12,7 @@ package com.hankcs.hanlp.model.perceptron;
 
 import com.hankcs.hanlp.HanLP;
 import com.hankcs.hanlp.model.perceptron.common.FrequencyMap;
-import com.hankcs.hanlp.model.perceptron.feature.ImmutableFeatureHashMap;
+import com.hankcs.hanlp.model.perceptron.feature.ImmutableFeatureMap;
 import com.hankcs.hanlp.model.perceptron.feature.MutableFeatureMap;
 import com.hankcs.hanlp.model.perceptron.instance.Instance;
 import com.hankcs.hanlp.model.perceptron.model.AveragedPerceptron;
@@ -124,7 +124,7 @@ public abstract class PerceptronTrainer extends InstanceConsumer
         logger.finish("\n加载完毕，实例一共%d句，特征总数%d\n", instances.length, mutableFeatureMap.size() * tagSet.size());
 
         // 开始训练
-        ImmutableFeatureHashMap immutableFeatureMap = new ImmutableFeatureHashMap(mutableFeatureMap.featureIdMap.entrySet(), tagSet);
+        ImmutableFeatureMap immutableFeatureMap = new ImmutableFeatureMap(mutableFeatureMap.featureIdMap, tagSet);
         mutableFeatureMap = null;
         double[] accuracy = null;
 
@@ -208,10 +208,6 @@ public abstract class PerceptronTrainer extends InstanceConsumer
                             models[0].parameter[j] += models[i].parameter[j];
                         }
                         models[0].parameter[j] /= threadNum;
-                    }
-                    for (int i = 1; i < models.length; i++)
-                    {
-                        System.arraycopy(models[0].parameter, 0, models[i].parameter, 0, models[0].parameter.length);
                     }
                     accuracy = trainingFile.equals(developFile) ? IOUtility.evaluate(instances, models[0]) : evaluate(developFile, models[0]);
                     out.printf("Iter#%d - ", iter);
@@ -326,7 +322,7 @@ public abstract class PerceptronTrainer extends InstanceConsumer
 
     public Result train(String trainingFile, String developFile, String modelFile) throws IOException
     {
-        return train(trainingFile, developFile, modelFile, 0.1, 10, Runtime.getRuntime().availableProcessors());
+        return train(trainingFile, developFile, modelFile, 0.1, 50, Runtime.getRuntime().availableProcessors());
     }
 
     private static void loadWordFromFile(String path, FrequencyMap storage, boolean segmented) throws IOException

@@ -24,6 +24,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import static com.hankcs.hanlp.corpus.tag.Nature.*;
+
 /**
  * 地址识别
  *
@@ -31,7 +33,7 @@ import java.util.List;
  */
 public class OrganizationRecognition
 {
-    public static boolean Recognition(List<Vertex> pWordSegResult, WordNet wordNetOptimum, WordNet wordNetAll)
+    public static boolean recognition(List<Vertex> pWordSegResult, WordNet wordNetOptimum, WordNet wordNetAll)
     {
         List<EnumItem<NT>> roleTagList = roleTag(pWordSegResult, wordNetAll);
         if (HanLP.Config.DEBUG)
@@ -48,7 +50,7 @@ public class OrganizationRecognition
             }
             System.out.printf("机构名角色观察：%s\n", sbLog.toString());
         }
-        List<NT> NTList = viterbiExCompute(roleTagList);
+        List<NT> NTList = viterbiCompute(roleTagList);
         if (HanLP.Config.DEBUG)
         {
             StringBuilder sbLog = new StringBuilder();
@@ -78,32 +80,25 @@ public class OrganizationRecognition
         {
             // 构成更长的
             Nature nature = vertex.guessNature();
-            switch (nature)
+            if (nature == nrf)
             {
-                case nrf:
+                if (vertex.getAttribute().totalFrequency <= 1000)
                 {
-                    if (vertex.getAttribute().totalFrequency <= 1000)
-                    {
-                        tagList.add(new EnumItem<NT>(NT.F, 1000));
-                    }
-                    else break;
+                    tagList.add(new EnumItem<NT>(NT.F, 1000));
+                    continue;
                 }
+            }
+            else if (nature == ni || nature == nic || nature == nis || nature == nit)
+            {
+                EnumItem<NT> ntEnumItem = new EnumItem<NT>(NT.K, 1000);
+                ntEnumItem.addLabel(NT.D, 1000);
+                tagList.add(ntEnumItem);
                 continue;
-                case ni:
-                case nic:
-                case nis:
-                case nit:
-                {
-                    EnumItem<NT> ntEnumItem = new EnumItem<NT>(NT.K, 1000);
-                    ntEnumItem.addLabel(NT.D, 1000);
-                    tagList.add(ntEnumItem);
-                }
-                continue;
-                case m:
-                {
-                    EnumItem<NT> ntEnumItem = new EnumItem<NT>(NT.M, 1000);
-                    tagList.add(ntEnumItem);
-                }
+            }
+            else if (nature == m)
+            {
+                EnumItem<NT> ntEnumItem = new EnumItem<NT>(NT.M, 1000);
+                tagList.add(ntEnumItem);
                 continue;
             }
 
@@ -124,7 +119,7 @@ public class OrganizationRecognition
      * @param roleTagList
      * @return
      */
-    public static List<NT> viterbiExCompute(List<EnumItem<NT>> roleTagList)
+    public static List<NT> viterbiCompute(List<EnumItem<NT>> roleTagList)
     {
         return Viterbi.computeEnum(roleTagList, OrganizationDictionary.transformMatrixDictionary);
     }

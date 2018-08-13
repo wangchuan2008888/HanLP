@@ -35,8 +35,8 @@ public class StructuredPerceptron extends LinearModel
     /**
      * 根据答案和预测更新参数
      *
-     * @param goldIndex    预测正确的特征函数（非压缩形式）
-     * @param predictIndex 命中的特征函数
+     * @param goldIndex    答案的特征函数（非压缩形式）
+     * @param predictIndex 预测的特征函数（非压缩形式）
      */
     public void update(int[] goldIndex, int[] predictIndex)
     {
@@ -44,11 +44,11 @@ public class StructuredPerceptron extends LinearModel
         {
             if (goldIndex[i] == predictIndex[i])
                 continue;
-            else
+            else // 预测与答案不一致
             {
-                parameter[goldIndex[i]]++;
+                parameter[goldIndex[i]]++; // 奖励正确的特征函数（将它的权值加一）
                 if (predictIndex[i] >= 0 && predictIndex[i] < parameter.length)
-                    parameter[predictIndex[i]]--;
+                    parameter[predictIndex[i]]--; // 惩罚招致错误的特征函数（将它的权值减一）
                 else
                 {
                     throw new IllegalArgumentException("更新参数时传入了非法的下标");
@@ -57,6 +57,11 @@ public class StructuredPerceptron extends LinearModel
         }
     }
 
+    /**
+     * 在线学习
+     *
+     * @param instance 样本
+     */
     public void update(Instance instance)
     {
         int[] guessLabel = new int[instance.length()];
@@ -65,8 +70,8 @@ public class StructuredPerceptron extends LinearModel
         for (int i = 0; i < instance.length(); i++)
         {
             int[] featureVector = instance.getFeatureAt(i);
-            int[] goldFeature = new int[featureVector.length];
-            int[] predFeature = new int[featureVector.length];
+            int[] goldFeature = new int[featureVector.length]; // 根据答案应当被激活的特征
+            int[] predFeature = new int[featureVector.length]; // 实际预测时激活的特征
             for (int j = 0; j < featureVector.length - 1; j++)
             {
                 goldFeature[j] = featureVector[j] * tagSet.size() + instance.tagArray[i];

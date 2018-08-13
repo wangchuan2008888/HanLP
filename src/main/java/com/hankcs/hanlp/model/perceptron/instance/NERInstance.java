@@ -11,18 +11,12 @@
 package com.hankcs.hanlp.model.perceptron.instance;
 
 import com.hankcs.hanlp.model.perceptron.feature.FeatureMap;
-import com.hankcs.hanlp.model.perceptron.feature.MutableFeatureMap;
 import com.hankcs.hanlp.model.perceptron.tagset.NERTagSet;
 import com.hankcs.hanlp.corpus.document.sentence.Sentence;
-import com.hankcs.hanlp.corpus.document.sentence.word.CompoundWord;
-import com.hankcs.hanlp.corpus.document.sentence.word.IWord;
-import com.hankcs.hanlp.corpus.document.sentence.word.Word;
 import com.hankcs.hanlp.model.perceptron.utility.Utility;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author hankcs
@@ -65,7 +59,6 @@ public class NERInstance extends Instance
      */
     protected int[] extractFeature(String[] wordArray, String[] posArray, FeatureMap featureMap, int position)
     {
-        boolean create = featureMap instanceof MutableFeatureMap;
         List<Integer> featVec = new ArrayList<Integer>();
 
         String pre2Word = position >= 2 ? wordArray[position - 2] : "_B_";
@@ -81,25 +74,25 @@ public class NERInstance extends Instance
         String next2Pos = position <= posArray.length - 3 ? posArray[position + 2] : "_E_";
 
         StringBuilder sb = new StringBuilder();
-        addFeatureThenClear(sb.append(pre2Word).append('1'), featVec, featureMap, create);
-        addFeatureThenClear(sb.append(preWord).append('2'), featVec, featureMap, create);
-        addFeatureThenClear(sb.append(curWord).append('3'), featVec, featureMap, create);
-        addFeatureThenClear(sb.append(nextWord).append('4'), featVec, featureMap, create);
-        addFeatureThenClear(sb.append(next2Word).append('5'), featVec, featureMap, create);
-//        addFeatureThenClear(sb.append(pre2Word).append(preWord).append('6'), featVec, featureMap, create);
-//        addFeatureThenClear(sb.append(preWord).append(curWord).append('7'), featVec, featureMap, create);
-//        addFeatureThenClear(sb.append(curWord).append(nextWord).append('8'), featVec, featureMap, create);
-//        addFeatureThenClear(sb.append(nextWord).append(next2Word).append('9'), featVec, featureMap, create);
+        addFeatureThenClear(sb.append(pre2Word).append('1'), featVec, featureMap);
+        addFeatureThenClear(sb.append(preWord).append('2'), featVec, featureMap);
+        addFeatureThenClear(sb.append(curWord).append('3'), featVec, featureMap);
+        addFeatureThenClear(sb.append(nextWord).append('4'), featVec, featureMap);
+        addFeatureThenClear(sb.append(next2Word).append('5'), featVec, featureMap);
+//        addFeatureThenClear(sb.append(pre2Word).append(preWord).append('6'), featVec, featureMap);
+//        addFeatureThenClear(sb.append(preWord).append(curWord).append('7'), featVec, featureMap);
+//        addFeatureThenClear(sb.append(curWord).append(nextWord).append('8'), featVec, featureMap);
+//        addFeatureThenClear(sb.append(nextWord).append(next2Word).append('9'), featVec, featureMap);
 
-        addFeatureThenClear(sb.append(pre2Pos).append('A'), featVec, featureMap, create);
-        addFeatureThenClear(sb.append(prePos).append('B'), featVec, featureMap, create);
-        addFeatureThenClear(sb.append(curPos).append('C'), featVec, featureMap, create);
-        addFeatureThenClear(sb.append(nextPos).append('D'), featVec, featureMap, create);
-        addFeatureThenClear(sb.append(next2Pos).append('E'), featVec, featureMap, create);
-        addFeatureThenClear(sb.append(pre2Pos).append(prePos).append('F'), featVec, featureMap, create);
-        addFeatureThenClear(sb.append(prePos).append(curPos).append('G'), featVec, featureMap, create);
-        addFeatureThenClear(sb.append(curPos).append(nextPos).append('H'), featVec, featureMap, create);
-        addFeatureThenClear(sb.append(nextPos).append(next2Pos).append('I'), featVec, featureMap, create);
+        addFeatureThenClear(sb.append(pre2Pos).append('A'), featVec, featureMap);
+        addFeatureThenClear(sb.append(prePos).append('B'), featVec, featureMap);
+        addFeatureThenClear(sb.append(curPos).append('C'), featVec, featureMap);
+        addFeatureThenClear(sb.append(nextPos).append('D'), featVec, featureMap);
+        addFeatureThenClear(sb.append(next2Pos).append('E'), featVec, featureMap);
+        addFeatureThenClear(sb.append(pre2Pos).append(prePos).append('F'), featVec, featureMap);
+        addFeatureThenClear(sb.append(prePos).append(curPos).append('G'), featVec, featureMap);
+        addFeatureThenClear(sb.append(curPos).append(nextPos).append('H'), featVec, featureMap);
+        addFeatureThenClear(sb.append(nextPos).append(next2Pos).append('I'), featVec, featureMap);
 
         return toFeatureArray(featVec);
     }
@@ -118,14 +111,8 @@ public class NERInstance extends Instance
         String[] wordArray = new String[collector.size()];
         String[] posArray = new String[collector.size()];
         String[] tagArray = new String[collector.size()];
-        int i = 0;
-        for (String[] tuple : collector)
-        {
-            wordArray[i] = tuple[0];
-            posArray[i] = tuple[1];
-            tagArray[i] = tuple[2];
-            ++i;
-        }
+        Utility.reshapeNER(collector, wordArray, posArray, tagArray);
         return new NERInstance(wordArray, posArray, tagArray, tagSet, featureMap);
     }
+
 }

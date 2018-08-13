@@ -43,16 +43,32 @@ public abstract class FeatureMap implements IStringIdMap, ICacheAble
     }
 
     public TagSet tagSet;
+    /**
+     * 是否允许新增特征
+     */
+    public boolean mutable;
 
     public FeatureMap(TagSet tagSet)
     {
+        this(tagSet, false);
+    }
+
+    public FeatureMap(TagSet tagSet, boolean mutable)
+    {
         this.tagSet = tagSet;
+        this.mutable = mutable;
     }
 
     public abstract Set<Map.Entry<String, Integer>> entrySet();
 
+    public FeatureMap(boolean mutable)
+    {
+        this.mutable = mutable;
+    }
+
     public FeatureMap()
     {
+        this(false);
     }
 
     @Override
@@ -91,6 +107,9 @@ public abstract class FeatureMap implements IStringIdMap, ICacheAble
                 break;
             case NER:
                 tagSet = new NERTagSet();
+                break;
+            case CLASSIFICATION:
+                tagSet = new TagSet(TaskType.CLASSIFICATION);
                 break;
         }
         tagSet.load(byteArray);
