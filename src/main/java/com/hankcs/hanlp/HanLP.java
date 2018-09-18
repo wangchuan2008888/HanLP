@@ -167,6 +167,8 @@ public class HanLP
         public static String CRFSegmentModelPath = "data/model/segment/CRFSegmentModel.txt";
         /**
          * HMM分词模型
+         *
+         * @deprecated 已废弃，请使用{@link PerceptronLexicalAnalyzer}
          */
         public static String HMMSegmentModelPath = "data/model/segment/HMMSegmentModel.bin";
         /**
@@ -184,7 +186,7 @@ public class HanLP
         /**
          * 感知机分词模型
          */
-        public static String PerceptronCWSModelPath = "data/model/perceptron/msra/cws.bin";
+        public static String PerceptronCWSModelPath = "data/model/perceptron/large/cws.bin";
         /**
          * 感知机词性标注模型
          */
@@ -647,7 +649,6 @@ public class HanLP
      *                  <li>条件随机场 (crf)：分词、词性标注与命名实体识别精度都较高，适合要求较高的NLP任务</li>
      *                  <li>感知机 (perceptron)：分词、词性标注与命名实体识别，支持在线学习</li>
      *                  <li>N最短路 (nshort)：命名实体识别稍微好一些，牺牲了速度</li>
-     *                  <li>2阶隐马 (hmm2)：训练速度较CRF快</li>
      *                  </ul>
      * @return 一个分词器
      */
@@ -674,8 +675,6 @@ public class HanLP
                 logger.warning("CRF模型加载失败");
                 throw new RuntimeException(e);
             }
-        else if ("hmm2".equals(algorithm) || "二阶隐马".equals(algorithm))
-            return new HMMSegment();
         else if ("perceptron".equals(algorithm) || "感知机".equals(algorithm))
         {
             try
