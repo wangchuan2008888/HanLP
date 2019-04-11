@@ -90,7 +90,7 @@ public class CoreDictionary
             logger.info("核心词典加载成功:" + trie.size() + "个词条，下面将写入缓存……");
             try
             {
-                DataOutputStream out = new DataOutputStream(IOUtil.newOutputStream(path + Predefine.BIN_EXT));
+                DataOutputStream out = new DataOutputStream(new BufferedOutputStream(IOUtil.newOutputStream(path + Predefine.BIN_EXT)));
                 Collection<CoreDictionary.Attribute> attributeList = map.values();
                 out.writeInt(attributeList.size());
                 for (CoreDictionary.Attribute attribute : attributeList)
@@ -269,6 +269,10 @@ public class CoreDictionary
             try
             {
                 String param[] = natureWithFrequency.split(" ");
+                if (param.length % 2 != 0)
+                {
+                    return new Attribute(Nature.create(natureWithFrequency.trim()), 1); // 儿童锁
+                }
                 int natureCount = param.length / 2;
                 Attribute attribute = new Attribute(natureCount);
                 for (int i = 0; i < natureCount; ++i)

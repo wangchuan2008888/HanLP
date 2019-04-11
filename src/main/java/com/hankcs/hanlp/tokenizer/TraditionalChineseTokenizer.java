@@ -40,18 +40,9 @@ public class TraditionalChineseTokenizer
         int offset = 0;
         for (Term term : termList)
         {
-            String tText;
             term.offset = offset;
-            if (term.length() == 1 || (tText = SimplifiedChineseDictionary.getTraditionalChinese(term.word)) == null)
-            {
-                term.word = text.substring(offset, offset + term.length());
-                offset += term.length();
-            }
-            else
-            {
-                offset += term.length();
-                term.word = tText;
-            }
+            term.word = text.substring(offset, offset + term.length());
+            offset += term.length();
         }
 
         return termList;
@@ -96,5 +87,17 @@ public class TraditionalChineseTokenizer
         }
 
         return resultList;
+    }
+
+    /**
+     * 分词断句 输出句子形式
+     *
+     * @param text     待分词句子
+     * @param shortest 是否断句为最细的子句（将逗号也视作分隔符）
+     * @return 句子列表，每个句子由一个单词列表组成
+     */
+    public static List<List<Term>> seg2sentence(String text, boolean shortest)
+    {
+        return SEGMENT.seg2sentence(text, shortest);
     }
 }

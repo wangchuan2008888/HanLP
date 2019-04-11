@@ -47,14 +47,16 @@ HanLP提供下列功能：
     * 语义推荐、拼音推荐、字词推荐
 * 依存句法分析
     * [基于神经网络的高性能依存句法分析器](https://github.com/hankcs/HanLP#21-%E4%BE%9D%E5%AD%98%E5%8F%A5%E6%B3%95%E5%88%86%E6%9E%90)
-    * [MaxEnt依存句法分析](https://github.com/hankcs/HanLP/blob/master/src/main/java/com/hankcs/hanlp/dependency/MaxEntDependencyParser.java)
+    * [基于ArcEager转移系统的柱搜索依存句法分析器](https://github.com/hankcs/HanLP/blob/master/src/test/java/com/hankcs/demo/DemoDependencyParser.java#L34)
 * [文本分类](https://github.com/hankcs/HanLP/wiki/%E6%96%87%E6%9C%AC%E5%88%86%E7%B1%BB%E4%B8%8E%E6%83%85%E6%84%9F%E5%88%86%E6%9E%90)
     * [情感分析](https://github.com/hankcs/HanLP/wiki/%E6%96%87%E6%9C%AC%E5%88%86%E7%B1%BB%E4%B8%8E%E6%83%85%E6%84%9F%E5%88%86%E6%9E%90#%E6%83%85%E6%84%9F%E5%88%86%E6%9E%90)
+* [文本聚类](https://github.com/hankcs/HanLP/wiki/%E6%96%87%E6%9C%AC%E8%81%9A%E7%B1%BB)
+    - KMeans、Repeated Bisection、自动推断聚类数目k
 * [word2vec](https://github.com/hankcs/HanLP/wiki/word2vec)
     * 词向量训练、加载、词语相似度计算、语义运算、查询、KMeans聚类
     * 文档语义相似度计算
 * [语料库工具](https://github.com/hankcs/HanLP/tree/master/src/main/java/com/hankcs/hanlp/corpus)
-    - 部分默认模型训练自小型语料库，鼓励用户自行训练。所有模块提供[训练接口](https://github.com/hankcs/HanLP/wiki)，语料可参考[OpenCorpus](https://github.com/hankcs/OpenCorpus)。
+    - 部分默认模型训练自小型语料库，鼓励用户自行训练。所有模块提供[训练接口](https://github.com/hankcs/HanLP/wiki)，语料可参考[98年人民日报语料库](http://file.hankcs.com/corpus/pku98.zip)。
 
 在提供丰富功能的同时，HanLP内部模块坚持低耦合、模型坚持惰性加载、服务坚持静态提供、词典坚持明文发布，使用非常方便。默认模型训练自全世界最大规模的中文语料库，同时自带一些语料处理工具，帮助用户训练自己的模型。
 
@@ -62,7 +64,7 @@ HanLP提供下列功能：
 
 ## 项目主页
 
-[在线演示](http://hanlp.hankcs.com/)、[Python调用](https://github.com/hankcs/pyhanlp)、[Solr及Lucene插件](https://github.com/hankcs/hanlp-lucene-plugin)、[论文引用](https://github.com/hankcs/HanLP/wiki/%E8%AE%BA%E6%96%87%E5%BC%95%E7%94%A8)、[更多信息](https://github.com/hankcs/HanLP/wiki)。
+[在线演示](http://hanlp.com/)、[Python调用](https://github.com/hankcs/pyhanlp)、[Solr及Lucene插件](https://github.com/hankcs/hanlp-lucene-plugin)、[论文引用](https://github.com/hankcs/HanLP/wiki/papers)、[更多信息](https://github.com/hankcs/HanLP/wiki)。
 
 ------
 
@@ -76,7 +78,7 @@ HanLP提供下列功能：
 <dependency>
     <groupId>com.hankcs</groupId>
     <artifactId>hanlp</artifactId>
-    <version>portable-1.6.8</version>
+    <version>portable-1.7.2</version>
 </dependency>
 ```
 
@@ -677,10 +679,9 @@ public class DemoDependencyParser
 ```
 - 说明
   * 内部采用`NeuralNetworkDependencyParser`实现，用户可以直接调用`NeuralNetworkDependencyParser.compute(sentence)`
-  * 也可以调用基于最大熵的依存句法分析器`MaxEntDependencyParser.compute(sentence)`
+  * 也可以调用基于ArcEager转移系统的柱搜索依存句法分析器`KBeamArcEagerDependencyParser`
 - 算法详解
   * [《基于神经网络分类模型与转移系统的判决式依存句法分析器》](http://www.hankcs.com/nlp/parsing/neural-network-based-dependency-parser.html)
-  * [《最大熵依存句法分析器的实现》](http://www.hankcs.com/nlp/parsing/to-achieve-the-maximum-entropy-of-the-dependency-parser.html)
 
 ## 词典说明
 本章详细介绍HanLP中的词典格式，满足用户自定义的需要。HanLP中有许多词典，它们的格式都是相似的，形式都是文本文档，随时可以修改。

@@ -21,9 +21,15 @@ import com.hankcs.hanlp.corpus.tag.Nature;
 import com.hankcs.hanlp.dictionary.CoreDictionary;
 import com.hankcs.hanlp.dictionary.CustomDictionary;
 import com.hankcs.hanlp.dictionary.other.CharTable;
+import com.hankcs.hanlp.dictionary.other.CharType;
 import com.hankcs.hanlp.model.perceptron.tagset.NERTagSet;
+import com.hankcs.hanlp.recognition.nr.JapanesePersonRecognition;
+import com.hankcs.hanlp.recognition.nr.TranslatedPersonRecognition;
 import com.hankcs.hanlp.seg.CharacterBasedSegment;
 import com.hankcs.hanlp.seg.common.Term;
+import com.hankcs.hanlp.seg.common.Vertex;
+import com.hankcs.hanlp.seg.common.WordNet;
+import com.hankcs.hanlp.utility.Predefine;
 
 import java.util.*;
 
@@ -37,27 +43,59 @@ public class AbstractLexicalAnalyzer extends CharacterBasedSegment implements Le
     protected Segmenter segmenter;
     protected POSTagger posTagger;
     protected NERecognizer neRecognizer;
+    /**
+     * 字符类型表
+     */
+    protected static byte[] typeTable;
+    /**
+     * 是否执行规则分词（英文数字标点等的规则预处理）。规则永远是丑陋的，默认关闭。
+     */
+    protected boolean enableRuleBasedSegment = false;
 
-    public AbstractLexicalAnalyzer()
+    static
     {
+        typeTable = new byte[CharType.type.length];
+        System.arraycopy(CharType.type, 0, typeTable, 0, typeTable.length);
+        for (char c : Predefine.CHINESE_NUMBERS.toCharArray())
+        {
+            typeTable[c] = CharType.CT_CHINESE;
+        }
+        typeTable[CharTable.convert('·')] = CharType.CT_CHINESE;
+    }
+
+    protected AbstractLexicalAnalyzer()
+    {
+        config.translatedNameRecognize = false;
+        config.japaneseNameRecognize = false;
     }
 
     public AbstractLexicalAnalyzer(Segmenter segmenter)
     {
+        this();
         this.segmenter = segmenter;
     }
 
     public AbstractLexicalAnalyzer(Segmenter segmenter, POSTagger posTagger)
     {
+        this();
         this.segmenter = segmenter;
         this.posTagger = posTagger;
     }
 
     public AbstractLexicalAnalyzer(Segmenter segmenter, POSTagger posTagger, NERecognizer neRecognizer)
     {
+        this();
         this.segmenter = segmenter;
         this.posTagger = posTagger;
         this.neRecognizer = neRecognizer;
+        if (posTagger != null)
+        {
+            config.speechTagging = true;
+            if (neRecognizer != null)
+            {
+                config.ner = true;
+            }
+        }
     }
 
     /**
@@ -80,7 +118,7 @@ public class AbstractLexicalAnalyzer extends CharacterBasedSegment implements Le
                 {
                     if (begin != offset[0])
                     {
-                        segmenter.segment(sentence.substring(offset[0], begin), normalized.substring(offset[0], begin), wordList);
+                        segmentAfterRule(sentence.substring(offset[0], begin), normalized.substring(offset[0], begin), wordList);
                     }
                     while (attributeList.size() < wordList.size())
                         attributeList.add(null);
@@ -92,12 +130,12 @@ public class AbstractLexicalAnalyzer extends CharacterBasedSegment implements Le
             });
             if (offset[0] != sentence.length())
             {
-                segmenter.segment(sentence.substring(offset[0]), normalized.substring(offset[0]), wordList);
+                segmentAfterRule(sentence.substring(offset[0]), normalized.substring(offset[0]), wordList);
             }
         }
         else
         {
-            segmenter.segment(sentence, normalized, wordList);
+            segmentAfterRule(sentence, normalized, wordList);
         }
     }
 
@@ -114,7 +152,7 @@ public class AbstractLexicalAnalyzer extends CharacterBasedSegment implements Le
                 {
                     if (begin != offset[0])
                     {
-                        segmenter.segment(sentence.substring(offset[0], begin), normalized.substring(offset[0], begin), wordList);
+                        segmentAfterRule(sentence.substring(offset[0], begin), normalized.substring(offset[0], begin), wordList);
                     }
                     wordList.add(sentence.substring(begin, end));
                     offset[0] = end;
@@ -122,12 +160,12 @@ public class AbstractLexicalAnalyzer extends CharacterBasedSegment implements Le
             });
             if (offset[0] != sentence.length())
             {
-                segmenter.segment(sentence.substring(offset[0]), normalized.substring(offset[0]), wordList);
+                segmentAfterRule(sentence.substring(offset[0]), normalized.substring(offset[0]), wordList);
             }
         }
         else
         {
-            segmenter.segment(sentence, normalized, wordList);
+            segmentAfterRule(sentence, normalized, wordList);
         }
     }
 
@@ -443,7 +481,95 @@ public class AbstractLexicalAnalyzer extends CharacterBasedSegment implements Le
                 }
             }
         }
+        if (config.translatedNameRecognize || config.japaneseNameRecognize)
+        {
+            List<Vertex> vertexList = toVertexList(termList, true);
+            WordNet wordNetOptimum = new WordNet(sentence, vertexList);
+            WordNet wordNetAll = wordNetOptimum;
+            if (config.translatedNameRecognize)
+            {
+                TranslatedPersonRecognition.recognition(vertexList, wordNetOptimum, wordNetAll);
+            }
+            if (config.japaneseNameRecognize)
+            {
+                JapanesePersonRecognition.recognition(vertexList, wordNetOptimum, wordNetAll);
+            }
+            termList = convert(vertexList, config.offset);
+        }
         return termList;
+    }
+
+    /**
+     * CT_CHINESE区间交给统计分词，否则视作整个单位
+     *
+     * @param sentence
+     * @param normalized
+     * @param start
+     * @param end
+     * @param preType
+     * @param wordList
+     */
+    private void pushPiece(String sentence, String normalized, int start, int end, byte preType, List<String> wordList)
+    {
+        if (preType == CharType.CT_CHINESE)
+        {
+            segmenter.segment(sentence.substring(start, end), normalized.substring(start, end), wordList);
+        }
+        else
+        {
+            wordList.add(sentence.substring(start, end));
+        }
+    }
+
+    /**
+     * 丑陋的规则系统
+     *
+     * @param sentence
+     * @param normalized
+     * @param wordList
+     */
+    protected void segmentAfterRule(String sentence, String normalized, List<String> wordList)
+    {
+        if (!enableRuleBasedSegment)
+        {
+            segmenter.segment(sentence, normalized, wordList);
+            return;
+        }
+        int start = 0;
+        int end = start;
+        byte preType = typeTable[normalized.charAt(end)];
+        byte curType;
+        while (++end < normalized.length())
+        {
+            curType = typeTable[normalized.charAt(end)];
+            if (curType != preType)
+            {
+                if (preType == CharType.CT_NUM)
+                {
+                    // 浮点数识别
+                    if ("，,．.".indexOf(normalized.charAt(end)) != -1)
+                    {
+                        if (end + 1 < normalized.length())
+                        {
+                            if (typeTable[normalized.charAt(end + 1)] == CharType.CT_NUM)
+                            {
+                                continue;
+                            }
+                        }
+                    }
+                    else if ("年月日时分秒".indexOf(normalized.charAt(end)) != -1)
+                    {
+                        preType = curType; // 交给统计分词
+                        continue;
+                    }
+                }
+                pushPiece(sentence, normalized, start, end, preType, wordList);
+                start = end;
+            }
+            preType = curType;
+        }
+        if (end == normalized.length())
+            pushPiece(sentence, normalized, start, end, preType, wordList);
     }
 
     /**
@@ -466,13 +592,13 @@ public class AbstractLexicalAnalyzer extends CharacterBasedSegment implements Le
             }
             else
             {
-                segmenter.segment(original, normalized, wordList);
+                segmentAfterRule(original, normalized, wordList);
                 attributeList = combineWithCustomDictionary(wordList);
             }
         }
         else
         {
-            segmenter.segment(original, normalized, wordList);
+            segmentAfterRule(original, normalized, wordList);
             attributeList = null;
         }
         return attributeList;
@@ -522,7 +648,7 @@ public class AbstractLexicalAnalyzer extends CharacterBasedSegment implements Le
         // BinTrie合并
         if (CustomDictionary.trie != null)
         {
-            for (int i = 1; i < length; ++i)
+            for (int i = 0; i < length; ++i)
             {
                 if (wordNet[i] == null) continue;
                 BaseNode<CoreDictionary.Attribute> state = CustomDictionary.trie.transition(wordNet[i], 0);
@@ -585,5 +711,17 @@ public class AbstractLexicalAnalyzer extends CharacterBasedSegment implements Le
             wordNet[start] = sbTerm.toString();
         }
         attributeArray[start] = value;
+    }
+
+    /**
+     * 是否执行规则分词（英文数字标点等的规则预处理）。规则永远是丑陋的，默认关闭。
+     *
+     * @param enableRuleBasedSegment 是否激活
+     * @return 词法分析器对象
+     */
+    public AbstractLexicalAnalyzer enableRuleBasedSegment(boolean enableRuleBasedSegment)
+    {
+        this.enableRuleBasedSegment = enableRuleBasedSegment;
+        return this;
     }
 }
